@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="GI城市制作进度展示 - 城市建造类模拟经营游戏设计方案，包含5个城市方向：哥谭、澳门、孟买、底特律、东京">
+    <meta name="keywords" content="GI城市,游戏设计,城市建造,模拟经营,哥谭,澳门,孟买,底特律,东京">
+    <title>GI城市制作进度 - 城市建造类模拟经营游戏设计方案</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'tech': ['Orbitron', 'sans-serif'],
+                        'body': ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        'gotham': '#0ea5e9', // Sky-500
+                        'macau': '#d946ef', // Fuchsia-500
+                        'mumbai': '#f97316', // Orange-500
+                        'glass': 'rgba(255, 255, 255, 0.05)',
+                        'glass-border': 'rgba(255, 255, 255, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .neon-text-blue { text-shadow: 0 0 10px rgba(14, 165, 233, 0.7); }
+        .neon-text-purple { text-shadow: 0 0 10px rgba(217, 70, 239, 0.7); }
+        .neon-text-orange { text-shadow: 0 0 10px rgba(249, 115, 22, 0.7); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .gradient-bg {
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+        }
+    </style>
+</head>
+<body class="font-body antialiased selection:bg-cyan-500 selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 top-0 start-0 border-b border-white/10 bg-black/60 backdrop-blur-md">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <span class="self-center text-2xl font-tech font-bold whitespace-nowrap text-white tracking-wider">GI <span class="text-cyan-500">CITY</span></span>
+            </a>
+            <div class="hidden w-full md:block md:w-auto" id="navbar-default">
+                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-700 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0">
+                    <li><a href="#demo-city" class="block py-2 px-3 text-gray-300 hover:text-green-400 transition">城市建设</a></li>
+                    <li><a href="#demo-npc" class="block py-2 px-3 text-gray-300 hover:text-blue-400 transition">NPC生态</a></li>
+                    <li><a href="#demo-llm" class="block py-2 px-3 text-gray-300 hover:text-purple-400 transition">LLM对话</a></li>
+                    <li><a href="#overview" class="block py-2 px-3 text-gray-300 hover:text-cyan-400 transition">项目概述</a></li>
+                    <li><a href="#gotham" class="block py-2 px-3 text-gray-300 hover:text-cyan-400 transition">罪恶之城</a></li>
+                    <li><a href="#macau" class="block py-2 px-3 text-gray-300 hover:text-fuchsia-400 transition">狂赌之渊</a></li>
+                    <li><a href="#mumbai" class="block py-2 px-3 text-gray-300 hover:text-orange-400 transition">宗教之城</a></li>
+                    <li><a href="#detroit" class="block py-2 px-3 text-gray-300 hover:text-gray-400 transition">工业之城</a></li>
+                    <li><a href="#tokyo" class="block py-2 px-3 text-gray-300 hover:text-red-400 transition">醉生梦死</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative h-screen flex items-center justify-center overflow-hidden">
+        <!-- Background Image -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://venus-vedas-1258344701.cos-internal.ap-guangzhou.tencentcos.cn//formal/20251231/vedas-formal-pod-20251231062205-6ed9da/eb30245d-650a-4e32-96b5-7b45fa9cf456.png" 
+                 alt="Cyberpunk City" class="w-full h-full object-cover opacity-60">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-[#050505]"></div>
+        </div>
+
+        <div class="relative z-10 text-center px-4 max-w-5xl mx-auto" data-aos="zoom-in" data-aos-duration="1000">
+            <h1 class="mb-4 text-5xl md:text-7xl font-tech font-black text-white tracking-tight neon-text-blue">
+                GI 城市制作方向
+            </h1>
+            <p class="mb-8 text-xl md:text-3xl font-light text-cyan-200 tracking-widest uppercase border-b border-cyan-500/30 pb-4 inline-block">
+                城市建造类模拟经营游戏设计方案
+            </p>
+            <p class="text-gray-400 max-w-2xl mx-auto text-lg">
+                融合《城市天际线2》宏观规划与《模拟人生》微观模拟。<br>
+                打造深度社会模拟机制的动态世界。
+            </p>
+            <div class="mt-10 flex justify-center gap-4">
+                <a href="#demo-city" class="px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-none skew-x-[-10deg] transition border border-cyan-400 shadow-[0_0_15px_rgba(8,145,178,0.5)]">
+                    <span class="block skew-x-[10deg]">开始探索</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+<!-- 第一页：城市建设 -->
+    <section id="demo-city" class="relative min-h-screen flex items-center py-24 border-t border-green-900/30">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1920" alt="城市建设背景" class="w-full h-full object-cover opacity-30">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-emerald-950/50 to-black"></div>
+        </div>
+        
+        <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <span class="px-4 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-green-400 text-sm font-bold">实机内容 1/3</span>
+                <h2 class="text-5xl font-tech font-bold text-white mt-6 mb-4">🏗️ 城市建设</h2>
+                <div class="h-1 w-24 bg-gradient-to-r from-green-600 to-green-400 mx-auto"></div>
+                <p class="mt-4 text-gray-400 text-lg">建造系统已经在和技术中心合作开发，基于之前已有的部分能力进行迭代</p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-8 md:p-12" data-aos="fade-up">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="px-3 py-1 bg-green-500/80 text-white text-xs font-bold rounded">开发中</span>
+                            <p class="text-gray-400 text-sm mt-1">完成度 25%</p>
+                        </div>
+                    </div>
+                    <div class="w-32 h-3 bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-green-600 to-green-400 rounded-full" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <!-- Map Size Display -->
+                <div class="mb-8 bg-green-900/20 border border-green-500/20 rounded-xl p-6" data-aos="fade-up">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">🗺️</span>
+                        <h4 class="text-green-400 font-bold text-lg">地图规划</h4>
+                    </div>
+                    <p class="text-gray-300 mb-4">基于目前的地图大小进行拆分，预期实现大小为 0.4km × 0.6km</p>
+                    <div class="relative rounded-lg overflow-hidden bg-black/40">
+                        <img src="./photo/ditu.png" alt="地图规划" class="w-full border border-green-500/20 rounded-lg">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-green-900/20 border border-green-500/20 rounded-xl p-6">
+                        <h4 class="text-green-400 font-bold text-lg mb-3">🛣️ 道路系统</h4>
+                        <p class="text-gray-300">支持多种道路类型，智能交叉口生成，自动连接与优化</p>
+                    </div>
+                    <div class="bg-green-900/20 border border-green-500/20 rounded-xl p-6">
+                        <h4 class="text-green-400 font-bold text-lg mb-3">🏢 建筑放置</h4>
+                        <p class="text-gray-300">住宅/商业/工业区划分，自动填充建筑，支持手动调整</p>
+                    </div>
+                    <div class="bg-green-900/20 border border-green-500/20 rounded-xl p-6">
+                        <h4 class="text-green-400 font-bold text-lg mb-3">🏗️ 模块化建筑区域</h4>
+                        <p class="text-gray-300">基于路网生成建筑区域，玩家可以选择制作居民区、商业区、写字楼、公共区域</p>
+                    </div>
+                    <div class="bg-green-900/20 border border-green-500/20 rounded-xl p-6">
+                        <h4 class="text-green-400 font-bold text-lg mb-3">🏛️ 建筑生成</h4>
+                        <p class="text-gray-300">基于选择的类型生成不同风格不同类型的建筑</p>
+                    </div>
+                </div>
+
+                <!-- Building Module Display -->
+                <div class="mt-8 bg-green-900/20 border border-green-500/20 rounded-xl p-6" data-aos="fade-up">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">🏘️</span>
+                        <h4 class="text-green-400 font-bold text-lg">建筑模块</h4>
+                    </div>
+                    <p class="text-gray-300 mb-4">所有区域类型的建筑单体生成最小满足面积条件为（2x2格，10M×10M），涂色小于1x2格无法生成任何建筑</p>
+                    
+                    <!-- Building Size Table -->
+                    <div class="mb-4 overflow-x-auto">
+                        <h5 class="text-green-300 font-bold mb-3">暂定建筑占地面积表格：</h5>
+                        <table class="w-full text-left text-gray-300 text-sm">
+                            <thead class="text-green-200 bg-green-900/30 border-b border-green-500/30">
+                                <tr>
+                                    <th class="px-4 py-2">建筑类型</th>
+                                    <th class="px-4 py-2">建筑示例</th>
+                                    <th class="px-4 py-2">占地面积</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">低密度住宅</td>
+                                    <td class="px-4 py-2">小平房、一户建</td>
+                                    <td class="px-4 py-2">2x2-5x5格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">中密度住宅</td>
+                                    <td class="px-4 py-2">公寓、联排房</td>
+                                    <td class="px-4 py-2">1x2-3x5格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">高密度住宅</td>
+                                    <td class="px-4 py-2">小区、高层</td>
+                                    <td class="px-4 py-2">3x3-5x5格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">购物区</td>
+                                    <td class="px-4 py-2">便利店、超市</td>
+                                    <td class="px-4 py-2">2x2-5x5格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">餐饮区</td>
+                                    <td class="px-4 py-2">咖啡、快餐</td>
+                                    <td class="px-4 py-2">2x2-5x5格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">娱乐区</td>
+                                    <td class="px-4 py-2">饭店、酒楼</td>
+                                    <td class="px-4 py-2">2x2-5x5格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-bold text-green-300">办公区</td>
+                                    <td class="px-4 py-2">写字楼</td>
+                                    <td class="px-4 py-2">2x2-6x6格</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="relative rounded-lg overflow-hidden bg-black/40">
+                        <video class="w-full border border-green-500/20 rounded-lg" controls>
+                            <source src="./Video/jianzhu.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放。
+                        </video>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 第二页：NPC生态 -->
+    <section id="demo-npc" class="relative min-h-screen flex items-center py-24 border-t border-blue-900/30">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=1920" alt="NPC生态背景" class="w-full h-full object-cover opacity-30">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-blue-950/50 to-black"></div>
+        </div>
+        
+        <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <span class="px-4 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-400 text-sm font-bold">实机内容 2/3</span>
+                <h2 class="text-5xl font-tech font-bold text-white mt-6 mb-4">👥 NPC生态</h2>
+                <div class="h-1 w-24 bg-gradient-to-r from-blue-600 to-blue-400 mx-auto"></div>
+                <p class="mt-4 text-gray-400 text-lg">智能市民系统持续开发中</p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-8 md:p-12" data-aos="fade-up">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="px-3 py-1 bg-blue-500/80 text-white text-xs font-bold rounded">开发中</span>
+                            <p class="text-gray-400 text-sm mt-1">完成度 30%</p>
+                        </div>
+                    </div>
+                    <div class="w-32 h-3 bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full" style="width: 30%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-blue-900/20 border border-blue-500/20 rounded-xl p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-green-500">✓</span>
+                            <h4 class="text-blue-400 font-bold text-lg">📅 日程系统</h4>
+                        </div>
+                        <p class="text-gray-300">NPC按时间表进行工作/休息/娱乐活动</p>
+                    </div>
+                    <div class="bg-blue-900/20 border border-blue-500/20 rounded-xl p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-blue-500">◐</span>
+                            <h4 class="text-blue-400 font-bold text-lg">💭 需求模拟</h4>
+                        </div>
+                        <p class="text-gray-300">饥饿、疲劳、社交、娱乐等需求驱动行为</p>
+                    </div>
+                    <div class="bg-blue-900/20 border border-blue-500/20 rounded-xl p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-blue-500">◐</span>
+                            <h4 class="text-blue-400 font-bold text-lg">🤝 社会关系</h4>
+                        </div>
+                        <p class="text-gray-300">家庭、朋友、同事关系网络构建</p>
+                    </div>
+                    <div class="bg-blue-900/20 border border-blue-500/20 rounded-xl p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-blue-500">◐</span>
+                            <h4 class="text-blue-400 font-bold text-lg">💼 职业系统</h4>
+                        </div>
+                        <p class="text-gray-300">多职业类型，晋升与转职机制</p>
+                    </div>
+                </div>
+
+                <!-- NPC生态视频演示 -->
+                <div class="bg-blue-900/20 border border-blue-500/20 rounded-xl p-6" data-aos="fade-up">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">🎬</span>
+                        <h4 class="text-blue-400 font-bold text-lg">城市规模展示</h4>
+                    </div>
+                    <p class="text-gray-300 mb-4">增加MessAI以及车流，形成初始城市的规模</p>
+                    <div class="relative rounded-lg overflow-hidden bg-black/40">
+                        <video class="w-full" controls>
+                            <source src="./Video/npc.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放。
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 第三页：LLM NPC聊天 -->
+    <section id="demo-llm" class="relative min-h-screen flex items-center py-24 border-t border-purple-900/30">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920" alt="LLM对话背景" class="w-full h-full object-cover opacity-30">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-purple-950/50 to-black"></div>
+        </div>
+        
+        <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <span class="px-4 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-purple-400 text-sm font-bold">实机内容 3/3</span>
+                <h2 class="text-5xl font-tech font-bold text-white mt-6 mb-4">💬 LLM NPC聊天</h2>
+                <div class="h-1 w-24 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto"></div>
+                <p class="mt-4 text-gray-400 text-lg">基于大语言模型的智能对话系统</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-2xl p-8" data-aos="fade-right">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <span class="px-3 py-1 bg-purple-500/80 text-white text-xs font-bold rounded">核心亮点</span>
+                                <p class="text-gray-400 text-sm mt-1">完成度 50%</p>
+                            </div>
+                        </div>
+                        <div class="w-24 h-3 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style="width: 50%"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-purple-900/20 border border-purple-500/20 rounded-xl p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-green-500">✓</span>
+                                <h4 class="text-purple-400 font-bold">自然对话</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm">基于大语言模型的智能对话系统</p>
+                        </div>
+                        <div class="bg-purple-900/20 border border-purple-500/20 rounded-xl p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-purple-500">◐</span>
+                                <h4 class="text-purple-400 font-bold">个性记忆</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm">NPC记住与玩家的历史交互内容</p>
+                        </div>
+                        <div class="bg-purple-900/20 border border-purple-500/20 rounded-xl p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-green-500">✓</span>
+                                <h4 class="text-purple-400 font-bold">情感反馈</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm">根据好感度调整对话语气和内容</p>
+                        </div>
+                        <div class="bg-purple-900/20 border border-purple-500/20 rounded-xl p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-purple-500">★</span>
+                                <h4 class="text-purple-400 font-bold">任务触发</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm">通过对话触发隐藏任务和事件</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 可交互聊天演示 -->
+                <div class="glass-card rounded-2xl p-8" data-aos="fade-left">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">💬 与NPC对话</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400 text-sm">好感度:</span>
+                            <div class="flex items-center gap-1">
+                                <span id="favorability" class="text-purple-400 font-bold">50</span>
+                                <span class="text-gray-500">/100</span>
+                            </div>
+                            <div class="w-16 h-2 bg-gray-700 rounded-full overflow-hidden ml-2">
+                                <div id="favorBar" class="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-500" style="width: 50%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- NPC信息 -->
+                    <div class="flex items-center gap-3 mb-4 p-3 bg-purple-900/20 rounded-lg border border-purple-500/20">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">☕</div>
+                        <div>
+                            <p class="text-white font-bold">老杰克</p>
+                            <p class="text-gray-400 text-xs">街角咖啡店老板 · 哥谭市民</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 聊天消息区域 -->
+                    <div id="chatMessages" class="bg-gray-900/80 rounded-xl p-4 border border-gray-700 h-64 overflow-y-auto mb-4 space-y-3">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">NPC</div>
+                            <div class="bg-blue-900/40 rounded-lg rounded-tl-none p-3 text-gray-200 text-sm max-w-[80%]">
+                                欢迎来到哥谭市！我是街角咖啡店的老板老杰克。最近这一带治安不太好，你可要小心那些帮派分子。有什么想聊的吗？
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 输入区域 -->
+                    <div class="flex gap-3">
+                        <input type="text" id="chatInput" placeholder="输入你想说的话..." 
+                               class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition"
+                               onkeypress="if(event.key==='Enter')sendMessage()">
+                        <button onclick="sendMessage()" 
+                                class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg transition flex items-center gap-2">
+                            <span>发送</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- 快捷回复 -->
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <button onclick="quickReply('帮派分子在哪里活动？')" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-full transition">帮派分子在哪里活动？</button>
+                        <button onclick="quickReply('这附近有什么好玩的地方？')" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-full transition">这附近有什么好玩的地方？</button>
+                        <button onclick="quickReply('你认识蝙蝠侠吗？')" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-full transition">你认识蝙蝠侠吗？</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LLM对话视频演示 -->
+            <div class="glass-card rounded-2xl p-8 mt-8" data-aos="fade-up">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-2xl">🎬</span>
+                    <h4 class="text-purple-400 font-bold text-lg">LLM对话系统演示</h4>
+                </div>
+                <p class="text-gray-300 mb-4">增加了LLM大语言聊天模型，目前可以初步的进行聊天，后续会根据游戏的设定，增强对话内容与游戏相关性</p>
+                <div class="relative rounded-lg overflow-hidden bg-black/40">
+                    <video class="w-full" controls>
+                        <source src="./Video/LLM.mp4" type="video/mp4">
+                        您的浏览器不支持视频播放。
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 聊天功能脚本 -->
+    <script>
+        let favorability = 50;
+        let conversationHistory = [];
+        
+        // LLM API 配置
+        const LLM_CONFIG = {
+            apiUrl: 'http://zhiruili.woa.com/api/llm/chat/completions',
+            apiKey: 'greedIsland-sk-151fd90bf0bfa2f2e88e58697390f764',
+            model: 'gpt-3.5-turbo' // 可根据实际支持的模型调整
+        };
+        
+        // NPC角色设定
+        const NPC_PROMPT = `你是老杰克，一位在哥谭市经营街角咖啡店的老板。你的性格特点：
+- 善良友好，但对哥谭的黑暗现实有清醒认识
+- 经营咖啡店已经20多年，见证了城市的变迁
+- 了解一些街头信息和帮派动向
+- 对蝙蝠侠等义警持保留态度
+- 说话带点市井气息，偶尔会给出警告或建议
+请保持角色一致性，用简短自然的语气回答（50字以内）。`;
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            // 添加用户消息
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // 禁用输入框，显示加载状态
+            input.disabled = true;
+            addLoadingMessage();
+            
+            try {
+                // 调用真实的LLM API
+                const response = await callLLMAPI(message);
+                
+                // 移除加载提示
+                removeLoadingMessage();
+                
+                // 添加AI回复
+                addMessage(response, 'npc');
+                
+                // 更新好感度
+                updateFavorability(Math.floor(Math.random() * 3) + 2);
+                
+                // 检测特殊关键词触发事件
+                checkSpecialEvents(message, response);
+                
+            } catch (error) {
+                removeLoadingMessage();
+                addMessage('抱歉，我现在有点忙...稍后再聊吧。', 'npc');
+                console.error('LLM API调用失败:', error);
+            } finally {
+                input.disabled = false;
+                input.focus();
+            }
+        }
+        
+        async function callLLMAPI(userMessage) {
+            // 构建对话历史
+            conversationHistory.push({
+                role: 'user',
+                content: userMessage
+            });
+            
+            // 保持对话历史在合理长度（最多10轮）
+            const messages = [
+                { role: 'system', content: NPC_PROMPT },
+                ...conversationHistory.slice(-10)
+            ];
+            
+            const response = await fetch(LLM_CONFIG.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${LLM_CONFIG.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: LLM_CONFIG.model,
+                    messages: messages,
+                    temperature: 0.8,
+                    max_tokens: 150
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const aiReply = data.choices[0].message.content;
+            
+            // 保存AI回复到历史
+            conversationHistory.push({
+                role: 'assistant',
+                content: aiReply
+            });
+            
+            return aiReply;
+        }
+        
+        function addLoadingMessage() {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'flex gap-3';
+            div.id = 'loadingMessage';
+            div.innerHTML = `
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">NPC</div>
+                <div class="bg-blue-900/40 rounded-lg rounded-tl-none p-3 text-gray-200 text-sm">
+                    <span class="inline-flex gap-1">
+                        <span class="animate-bounce">.</span>
+                        <span class="animate-bounce" style="animation-delay: 0.2s">.</span>
+                        <span class="animate-bounce" style="animation-delay: 0.4s">.</span>
+                    </span>
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function removeLoadingMessage() {
+            const loading = document.getElementById('loadingMessage');
+            if (loading) loading.remove();
+        }
+        
+        function checkSpecialEvents(userMsg, aiReply) {
+            const keywords = {
+                '帮派': '🔓 隐藏任务已解锁：调查神秘义警',
+                '蝙蝠侠': '💡 获得线索：神秘义警出没地点',
+                '咖啡': '☕ 获得物品：哥谭特调咖啡'
+            };
+            
+            for (const [key, event] of Object.entries(keywords)) {
+                if (userMsg.includes(key) || aiReply.includes(key)) {
+                    setTimeout(() => {
+                        addSystemMessage(event);
+                    }, 500);
+                    break;
+                }
+            }
+        }
+        
+        function quickReply(text) {
+            document.getElementById('chatInput').value = text;
+            sendMessage();
+        }
+        
+        function addMessage(text, type) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = type === 'user' ? 'flex gap-3 justify-end' : 'flex gap-3';
+            
+            // 对HTML内容进行转义防止XSS
+            const safeText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            if (type === 'user') {
+                div.innerHTML = `
+                    <div class="bg-green-900/40 rounded-lg rounded-tr-none p-3 text-gray-200 text-sm max-w-[80%]">${safeText}</div>
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">你</div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">NPC</div>
+                    <div class="bg-blue-900/40 rounded-lg rounded-tl-none p-3 text-gray-200 text-sm max-w-[80%]">${safeText}</div>
+                `;
+            }
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addSystemMessage(text) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'text-center';
+            div.innerHTML = `<span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">${text}</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function updateFavorability(amount) {
+            favorability = Math.min(100, Math.max(0, favorability + amount));
+            document.getElementById('favorability').textContent = favorability;
+            document.getElementById('favorBar').style.width = favorability + '%';
+            
+            if (favorability >= 80 && favorability - amount < 80) {
+                addSystemMessage('💜 NPC好感度达到80，解锁更多对话选项！');
+            }
+        }
+    </script>
+
+<section id="overview" class="py-20 px-4 md:px-8 max-w-7xl mx-auto">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-tech font-bold text-white mb-4">项目概述</h2>
+            <div class="h-1 w-20 bg-cyan-500 mx-auto"></div>
+            <p class="mt-4 text-gray-400">目前细化的方案有5个，玩家可以基于法案构建截然不同的城市生态</p>
+        </div>
+
+        <!-- Bento Grid Layout for Directions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <!-- Gotham Card -->
+            <div class="group relative h-96 overflow-hidden rounded-xl border border-cyan-900/50 cursor-pointer" data-aos="fade-up" data-aos-delay="100">
+                <img src="https://venus-vedas-1258344701.cos-internal.ap-guangzhou.tencentcos.cn//formal/20251231/vedas-formal-pod-20251231062205-6ed9da/8c019dbb-e959-48db-875f-863892bf69c7.jpg" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40" alt="Gotham">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-6">
+                    <h3 class="text-3xl font-tech text-cyan-400 mb-2">罪恶之城 · 哥谭</h3>
+                    <p class="text-gray-300 text-sm mb-2">社会不公 | 贫富差距 | 英雄与反派</p>
+                    <p class="text-gray-400 text-xs line-clamp-3">富人阶层稳固，底层民众生活困苦，极度的社会不公催生出特殊的NPC——英雄和反派。</p>
+                </div>
+            </div>
+
+            <!-- Macau Card -->
+            <div class="group relative h-96 overflow-hidden rounded-xl border border-fuchsia-900/50 cursor-pointer" data-aos="fade-up" data-aos-delay="200">
+                <img src="https://venus-vedas-1258344701.cos-internal.ap-guangzhou.tencentcos.cn//formal/20251231/vedas-formal-pod-20251231062205-6ed9da/e6156e3f-9352-4022-8301-95a5c3bdc7b4.jpg" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40" alt="Macau">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-6">
+                    <h3 class="text-3xl font-tech text-fuchsia-400 mb-2">狂赌之渊 · 澳门</h3>
+                    <p class="text-gray-300 text-sm mb-2">博彩核心 | 灰色产业 | 势力斗争</p>
+                    <p class="text-gray-400 text-xs line-clamp-3">城市经济高度依赖博彩业，各方势力错综复杂，玩家需要在合法与灰色地带之间寻求平衡。</p>
+                </div>
+            </div>
+
+            <!-- Mumbai Card -->
+            <div class="group relative h-96 overflow-hidden rounded-xl border border-orange-900/50 cursor-pointer" data-aos="fade-up" data-aos-delay="300">
+                <img src="./photo/mengmai.jpeg" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40" alt="Mumbai">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-6">
+                    <h3 class="text-3xl font-tech text-orange-400 mb-2">宗教之城 · 孟买</h3>
+                    <p class="text-gray-300 text-sm mb-2">二元结构 | 宗教信仰 | 现代与传统</p>
+                    <p class="text-gray-400 text-xs line-clamp-3">现代规划与传统混合，宽阔高速与拥堵老街并存，宗教信仰深刻影响社会生活。</p>
+                </div>
+            </div>
+
+            <!-- Detroit Card -->
+            <div class="group relative h-96 overflow-hidden rounded-xl border border-gray-600/50 cursor-pointer" data-aos="fade-up" data-aos-delay="400">
+                <img src="./photo/ditelv1.png" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40" alt="Detroit">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-6">
+                    <h3 class="text-3xl font-tech text-gray-300 mb-2">工业之城 · 底特律</h3>
+                    <p class="text-gray-300 text-sm mb-2">汽车工业 | 城市衰退 | 复兴重生</p>
+                    <p class="text-gray-400 text-xs line-clamp-3">曾经的汽车之都，经历辉煌与衰落，工业空心化与人口流失带来的城市收缩与重生。</p>
+                </div>
+            </div>
+
+            <!-- Tokyo Card -->
+            <div class="group relative h-96 overflow-hidden rounded-xl border border-red-900/50 cursor-pointer" data-aos="fade-up" data-aos-delay="500">
+                <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1920" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40" alt="Tokyo">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-6">
+                    <h3 class="text-3xl font-tech text-red-400 mb-2">醉生梦死 · 东京</h3>
+                    <p class="text-gray-300 text-sm mb-2">极道文化 | 夜之帝国 | 人情冷暖</p>
+                    <p class="text-gray-400 text-xs line-clamp-3">歌舞伎町的霓虹灯下，黑帮、酒吧、牛郎店构成不夜城，在秩序与混乱之间游走的灰色世界。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Direction 1: Gotham -->
+    <section id="gotham" class="relative py-24 border-t border-cyan-900/30">
+        <div class="absolute inset-0 bg-gradient-to-b from-slate-900/90 to-black pointer-events-none"></div>
+        <!-- Background decoration -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-[url('https://venus-vedas-1258344701.cos-internal.ap-guangzhou.tencentcos.cn//formal/20251231/vedas-formal-pod-20251231062205-6ed9da/23c083b7-5a2a-4cc0-bdbd-b127fb45ec5f.jpg')] bg-cover bg-no-repeat opacity-10 mix-blend-overlay"></div>
+
+        <div class="relative max-w-7xl mx-auto px-4 md:px-8">
+            <div class="flex items-center gap-4 mb-12" data-aos="fade-right">
+                <div class="w-2 h-12 bg-cyan-500"></div>
+                <h2 class="text-5xl font-tech font-bold text-white neon-text-blue">方向一：罪恶之城 - 哥谭</h2>
+            </div>
+
+            <!-- Core Positioning - Full Width -->
+            <div class="glass-card p-8 rounded-xl mb-8" data-aos="fade-up">
+                <h3 class="text-2xl font-bold text-cyan-400 mb-4 border-b border-cyan-500/20 pb-2">核心定位</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    城市数据表面大好，但贫富差距悬殊。富人阶层稳固，中产阶级不断下滑，底层民众生活困苦，黑恶势力盛行。金融业昌盛，是富人的天堂，政府地租收入高，但高地租压迫中产，使其持续沦为穷人。极度的社会不公和高犯罪率催生出特殊的NPC——<span class="text-cyan-300 font-bold">英雄</span>和<span class="text-red-400 font-bold">反派</span>。
+                </p>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: City Planning -->
+                <div class="space-y-8">
+                    <div class="glass-card p-8 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-2xl font-bold text-cyan-400 mb-4 border-b border-cyan-500/20 pb-2">城市规划</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-gray-300">
+                                <thead class="text-cyan-200 uppercase bg-cyan-900/20">
+                                    <tr>
+                                        <th class="px-4 py-3">区域</th>
+                                        <th class="px-4 py-3">定位</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700">
+                                    <tr><td class="px-4 py-2 font-bold">东区</td><td class="px-4 py-2">贫民区</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">奥迪斯堡区</td><td class="px-4 py-2">工业区</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">黑门岛</td><td class="px-4 py-2">监狱</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">上城岛</td><td class="px-4 py-2">穷人区，临近港口工业区</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">中城岛</td><td class="px-4 py-2">中产区，核心办公/商业区</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">下城岛</td><td class="px-4 py-2">富人区，老区唐人街</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-400">
+                            <span class="text-cyan-500 font-bold">其他地标：</span> 钻石区、犯罪巷、阿卡姆疯人院、韦恩总部、墓地、大学、韦恩庄园
+                        </div>
+                        <div class="mt-6">
+                            <img src="./photo/getan.png" alt="哥谭城市规划图" class="w-full rounded-lg border border-cyan-500/20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Details -->
+                <div class="space-y-8">
+                    <!-- Buildings -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">特色建筑</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-cyan-900/40 border border-cyan-500/30 rounded text-xs text-cyan-100">韦恩大厦</span>
+                            <span class="px-3 py-1 bg-cyan-900/40 border border-cyan-500/30 rounded text-xs text-cyan-100">哥特式民房</span>
+                            <span class="px-3 py-1 bg-cyan-900/40 border border-cyan-500/30 rounded text-xs text-cyan-100">疯人院建筑群</span>
+                            <span class="px-3 py-1 bg-cyan-900/40 border border-cyan-500/30 rounded text-xs text-cyan-100">美式贫民建筑</span>
+                            <span class="px-3 py-1 bg-cyan-900/40 border border-cyan-500/30 rounded text-xs text-cyan-100">监狱建筑群</span>
+                            <span class="px-3 py-1 bg-cyan-900/40 border border-cyan-500/30 rounded text-xs text-cyan-100">港口重工业区</span>
+                        </div>
+                    </div>
+
+                    <!-- Professions -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">特色职业 TAG</h3>
+                        <div class="space-y-4">
+                            <div class="border-l-2 border-gray-500 pl-3">
+                                <h4 class="text-gray-200 font-bold text-sm">黑警</h4>
+                                <p class="text-xs text-gray-400">处理犯罪效率低，向受害家庭索贿。</p>
+                            </div>
+                            <div class="border-l-2 border-cyan-500 pl-3">
+                                <h4 class="text-cyan-200 font-bold text-sm">超级英雄</h4>
+                                <p class="text-xs text-gray-400">高属性+特定TAG，高犯罪率时觉醒。</p>
+                            </div>
+                            <div class="border-l-2 border-red-500 pl-3">
+                                <h4 class="text-red-200 font-bold text-sm">超级反派</h4>
+                                <p class="text-xs text-gray-400">阻止超级英雄并制造重大事故。</p>
+                            </div>
+                            <div class="border-l-2 border-yellow-600 pl-3">
+                                <h4 class="text-yellow-200 font-bold text-sm">帮派成员</h4>
+                                <p class="text-xs text-gray-400">维护据点秩序，主要目的是赚钱。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Events List -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">事件系统</h3>
+                        <div class="space-y-4 text-sm">
+                            <div>
+                                <h4 class="text-white font-bold mb-1">有组织犯罪</h4>
+                                <p class="text-gray-400">刺客联盟入侵、大骚乱、黑帮勒索、黑帮火并、大宗贩毒。</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">无组织犯罪</h4>
+                                <p class="text-gray-400">谋杀、抢劫银行、绑架、酗酒闹事、药物交易。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Factions -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-cyan-400 mb-3">势力体系</h3>
+                        <ul class="space-y-3 text-gray-300 text-sm">
+                            <li class="flex items-start"><span class="text-cyan-500 mr-2">➤</span> <span><strong>帮派：</strong>出现在低地租区域，警力覆盖低和法案宽松的地方易形成。</span></li>
+                            <li class="flex items-start"><span class="text-red-500 mr-2">➤</span> <span><strong>反派组织：</strong>由超级反派招募成员组成，主要目的是搞破坏。</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Laws -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-cyan-400 mb-3">特色法案</h3>
+                        <ul class="space-y-2 text-gray-300 text-sm list-disc list-inside marker:text-cyan-500">
+                            <li>没有死刑 (严重犯罪上升)</li>
+                            <li>宽松的保释制度 (纵容黑帮)</li>
+                            <li>轻度受贿罪量刑 (黑警TAG)</li>
+                            <li>富人减税穷人加税</li>
+                            <li>高保险费用</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction 2: Macau -->
+    <section id="macau" class="relative py-24 border-t border-fuchsia-900/30">
+        <div class="absolute inset-0 bg-gradient-to-b from-slate-900/90 to-black pointer-events-none"></div>
+        <!-- Background decoration -->
+        <div class="absolute top-0 left-0 w-full h-full bg-[url('https://venus-vedas-1258344701.cos-internal.ap-guangzhou.tencentcos.cn//formal/20251231/vedas-formal-pod-20251231062205-6ed9da/09d80069-1d3b-425e-ae44-2313cc50778f.jpg')] bg-cover bg-fixed opacity-10 mix-blend-color-dodge"></div>
+
+        <div class="relative max-w-7xl mx-auto px-4 md:px-8">
+            <div class="flex items-center justify-end gap-4 mb-12" data-aos="fade-left">
+                <h2 class="text-5xl font-tech font-bold text-white neon-text-purple text-right">方向二：狂赌之渊 - 澳门</h2>
+                <div class="w-2 h-12 bg-fuchsia-500"></div>
+            </div>
+
+            <!-- Core Positioning - Full Width -->
+            <div class="glass-card p-8 rounded-xl mb-8" data-aos="fade-up">
+                <h3 class="text-2xl font-bold text-fuchsia-400 mb-4 border-b border-fuchsia-500/20 pb-2">核心定位</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    以博彩业为核心，涉及灰色产业与势力斗争。城市经济高度依赖博彩业，各方势力错综复杂，玩家需要在合法与灰色地带之间寻求平衡。
+                </p>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left Column: Details -->
+                <div class="lg:col-span-4 space-y-8">
+                    <!-- Professions -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-xl font-bold text-fuchsia-400 mb-4">特色职业 TAG</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2 py-1 bg-fuchsia-900/30 border border-fuchsia-500/30 rounded text-xs text-fuchsia-100" title="抹除负面事件">公关</span>
+                            <span class="px-2 py-1 bg-fuchsia-900/30 border border-fuchsia-500/30 rounded text-xs text-fuchsia-100" title="引导高净值客群">叠码仔</span>
+                            <span class="px-2 py-1 bg-fuchsia-900/30 border border-fuchsia-500/30 rounded text-xs text-fuchsia-100" title="折价收购资产">当铺估价师</span>
+                            <span class="px-2 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100" title="潜在罪犯">赌鬼</span>
+                            <span class="px-2 py-1 bg-fuchsia-900/30 border border-fuchsia-500/30 rounded text-xs text-fuchsia-100" title="触发赌客信心buff">讨喜党</span>
+                            <span class="px-2 py-1 bg-fuchsia-900/30 border border-fuchsia-500/30 rounded text-xs text-fuchsia-100" title="处理闹事">赌场安保</span>
+                            <span class="px-2 py-1 bg-fuchsia-900/30 border border-fuchsia-500/30 rounded text-xs text-fuchsia-100" title="提升深夜吸引力">成人秀演员</span>
+                        </div>
+                    </div>
+
+                    <!-- Laws & Events -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-xl font-bold text-fuchsia-400 mb-3">特色法案 & 事件</h3>
+                        <div class="text-sm text-gray-300 space-y-2">
+                            <p><span class="text-fuchsia-500 font-bold">法案：</span>社会责任绑定、赌博成瘾管控、发财车优先、叠码仔合法准入、夜间表演放宽。</p>
+                            <p><span class="text-fuchsia-500 font-bold">事件：</span>千王社肥羊邀约、地盘争夺、千王之王洗劫案、家族继承权争夺。</p>
+                        </div>
+                    </div>
+
+                    <!-- Factions Grid -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-xl font-bold text-fuchsia-400 mb-4">六大势力体系</h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="p-3 bg-black/40 rounded border border-fuchsia-500/20">
+                                <h4 class="text-fuchsia-300 font-bold text-sm">赌场家族集团</h4>
+                                <p class="text-xs text-gray-400 mt-1">赌城真正的"主人"，控制经济。</p>
+                            </div>
+                            <div class="p-3 bg-black/40 rounded border border-fuchsia-500/20">
+                                <h4 class="text-fuchsia-300 font-bold text-sm">地下钱庄联盟</h4>
+                                <p class="text-xs text-gray-400 mt-1">地下秩序掌控者，高利贷。</p>
+                            </div>
+                            <div class="p-3 bg-black/40 rounded border border-fuchsia-500/20">
+                                <h4 class="text-fuchsia-300 font-bold text-sm">鼹鼠帮</h4>
+                                <p class="text-xs text-gray-400 mt-1">社会底层，情报贩子。</p>
+                            </div>
+                            <div class="p-3 bg-black/40 rounded border border-fuchsia-500/20">
+                                <h4 class="text-fuchsia-300 font-bold text-sm">洗钱集团</h4>
+                                <p class="text-xs text-gray-400 mt-1">最隐秘势力，承接巨额脏钱。</p>
+                            </div>
+                            <div class="p-3 bg-black/40 rounded border border-fuchsia-500/20">
+                                <h4 class="text-fuchsia-300 font-bold text-sm">风水堪舆工会</h4>
+                                <p class="text-xs text-gray-400 mt-1">布局增益，顶尖风水师。</p>
+                            </div>
+                            <div class="p-3 bg-black/40 rounded border border-fuchsia-500/20">
+                                <h4 class="text-fuchsia-300 font-bold text-sm">千王社</h4>
+                                <p class="text-xs text-gray-400 mt-1">专业出千，可发动"洗劫计划"。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Buildings & Planning -->
+                <div class="lg:col-span-8 space-y-8">
+                    <!-- Buildings -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-up">
+                        <h3 class="text-xl font-bold text-fuchsia-400 mb-4">特色建筑</h3>
+                        <ul class="space-y-3 text-sm text-gray-300">
+                            <li class="flex justify-between border-b border-gray-700 pb-2">
+                                <span>博彩综合体</span>
+                                <span class="text-xs text-gray-500">集赌场/酒店/商场于一体</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-700 pb-2">
+                                <span>卫星赌场</span>
+                                <span class="text-xs text-gray-500">旧区街道里的小型赌场</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-700 pb-2">
+                                <span>唐楼与骑楼</span>
+                                <span class="text-xs text-gray-500">下铺上居</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-700 pb-2">
+                                <span>发财车枢纽</span>
+                                <span class="text-xs text-gray-500">私营豪华大巴</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span>当铺</span>
+                                <span class="text-xs text-gray-500">林立成排，防盗铁栅栏</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- City Planning -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-up">
+                        <h3 class="text-xl font-bold text-fuchsia-400 mb-3">城市规划片区</h3>
+                        <ul class="space-y-2 text-gray-300 text-sm list-disc list-inside marker:text-fuchsia-500">
+                            <li>历史文化老城区 (无博彩)</li>
+                            <li>传统博彩商业配套区 (中小型)</li>
+                            <li>商务会展+现代服务片区</li>
+                            <li>超级博彩度假集群区 (巨型)</li>
+                            <li>生态休闲+低密度度假片区</li>
+                        </ul>
+                        <div class="mt-6">
+                            <img src="./photo/aomen.png" alt="澳门城市规划图" class="w-full rounded-lg border border-fuchsia-500/20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction 3: Mumbai -->
+    <section id="mumbai" class="relative py-24 border-t border-orange-900/30">
+        <div class="absolute inset-0 bg-gradient-to-b from-slate-900/90 to-black pointer-events-none"></div>
+        <!-- Background decoration -->
+        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-[url('https://venus-vedas-1258344701.cos-internal.ap-guangzhou.tencentcos.cn//formal/20251231/vedas-formal-pod-20251231062205-6ed9da/be9dab1e-3480-4a53-be0c-b918b01eb7e0.jpg')] bg-cover bg-bottom opacity-20 mix-blend-overlay"></div>
+
+        <div class="relative max-w-7xl mx-auto px-4 md:px-8">
+            <div class="flex items-center gap-4 mb-12" data-aos="fade-right">
+                <div class="w-2 h-12 bg-orange-500"></div>
+                <h2 class="text-5xl font-tech font-bold text-white neon-text-orange">方向三：宗教之城 - 孟买</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left Column: Core Info -->
+                <div class="lg:col-span-8 space-y-8">
+                    <!-- Core Positioning -->
+                    <div class="glass-card p-8 rounded-xl" data-aos="fade-up">
+                        <h3 class="text-2xl font-bold text-orange-400 mb-4 border-b border-orange-500/20 pb-2">核心定位</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            现代规划+传统混合的二元结构，宗教信仰对社会生活有深刻影响。城市呈现出宽阔现代化高速公路与狭窄拥堵老城区街道并存的特点。
+                        </p>
+                        <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+                            <div class="bg-orange-900/20 p-2 rounded border border-orange-500/20">
+                                <div class="text-2xl font-bold text-white">39%</div>
+                                <div class="text-xs text-orange-300">金融服务</div>
+                            </div>
+                            <div class="bg-orange-900/20 p-2 rounded border border-orange-500/20">
+                                <div class="text-2xl font-bold text-white">15%</div>
+                                <div class="text-xs text-orange-300">数字科技</div>
+                            </div>
+                            <div class="bg-orange-900/20 p-2 rounded border border-orange-500/20">
+                                <div class="text-2xl font-bold text-white">10%</div>
+                                <div class="text-xs text-orange-300">娱乐/零售</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buildings -->
+                    <div class="glass-card p-8 rounded-xl" data-aos="fade-up">
+                        <h3 class="text-2xl font-bold text-orange-400 mb-4">特色建筑</h3>
+                        <div class="flex flex-col gap-2 mb-6">
+                            <span class="p-2 bg-orange-900/20 border-l-4 border-orange-500 text-sm text-gray-200">街道+摊贩</span>
+                            <span class="p-2 bg-orange-900/20 border-l-4 border-orange-500 text-sm text-gray-200">贫民窟</span>
+                            <span class="p-2 bg-orange-900/20 border-l-4 border-orange-500 text-sm text-gray-200">乡村风民宿</span>
+                            <span class="p-2 bg-orange-900/20 border-l-4 border-orange-500 text-sm text-gray-200">寺庙、寝宫</span>
+                            <span class="p-2 bg-orange-900/20 border-l-4 border-orange-500 text-sm text-gray-200">私人银行</span>
+                        </div>
+                        <div class="relative rounded-lg overflow-hidden bg-black/40">
+                            <img src="./photo/mengmai.jpeg" alt="孟买特色建筑" class="w-full border border-orange-500/20 rounded-lg">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Details -->
+                <div class="lg:col-span-4 space-y-8">
+                    <!-- Structure -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-orange-400 mb-4">城市结构</h3>
+                        <ul class="space-y-3 text-sm text-gray-300">
+                            <li><strong>道路：</strong>放射状与环状结合</li>
+                            <li><strong>交通：</strong>混合交通（汽车、摩托、三轮、人力车、牛车、骆驼车）</li>
+                            <li><strong>分区：</strong>CBD、工业区、居住区、港口区（各类人群隔离）</li>
+                        </ul>
+                    </div>
+
+                    <!-- Events -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-orange-400 mb-4">高频事件</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-300 space-y-1">
+                            <li>公共卫生事故</li>
+                            <li>大型交通事故</li>
+                            <li>踩踏事件</li>
+                            <li>大范围电力着火</li>
+                            <li>私人银行破产与暴力催收</li>
+                            <li>寺庙祭祀与社群冲突</li>
+                        </ul>
+                    </div>
+
+                    <!-- 12 Laws Table -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-orange-400 mb-4">12项特色法案</h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            <!-- Law Item -->
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">允许摊贩经济</h4>
+                                <p class="text-xs text-gray-400">降低失业率 / 增加交通事故</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">减少公共卫生支出</h4>
+                                <p class="text-xs text-gray-400">省钱 / 爆发卫生事故</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">允许增加居住密度</h4>
+                                <p class="text-xs text-gray-400">扩容100% / 踩踏事件</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">允许贫民窟</h4>
+                                <p class="text-xs text-gray-400">允许建设贫民窟</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">允许载具超载</h4>
+                                <p class="text-xs text-gray-400">承载+50% / 大型交通事故</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">宗教信仰扶持</h4>
+                                <p class="text-xs text-gray-400">获得宗教tag / 社群冲突</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">宗教种姓制度</h4>
+                                <p class="text-xs text-gray-400">出现"寝宫"建筑</p>
+                            </div>
+                            <div class="p-3 border border-gray-700 rounded bg-black/20">
+                                <h4 class="text-orange-300 font-bold text-sm">允许私电</h4>
+                                <p class="text-xs text-gray-400">电力着火事故</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction 4: Detroit -->
+    <section id="detroit" class="relative py-24 border-t border-gray-700/30">
+        <div class="absolute inset-0 bg-gradient-to-b from-slate-900/90 to-black pointer-events-none"></div>
+        <!-- Background decoration -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-[url('https://images.unsplash.com/photo-1494942112740-ab05b1e3f05b?w=1920')] bg-cover bg-no-repeat opacity-10 mix-blend-overlay"></div>
+
+        <div class="relative max-w-7xl mx-auto px-4 md:px-8">
+            <div class="flex items-center justify-end gap-4 mb-12" data-aos="fade-left">
+                <h2 class="text-5xl font-tech font-bold text-white text-right" style="text-shadow: 0 0 10px rgba(156, 163, 175, 0.7);">方向四：工业之城 - 底特律</h2>
+                <div class="w-2 h-12 bg-gray-400"></div>
+            </div>
+
+            <!-- Core Positioning - Full Width -->
+            <div class="glass-card p-8 rounded-xl mb-8" data-aos="fade-up">
+                <h3 class="text-2xl font-bold text-gray-300 mb-4 border-b border-gray-500/20 pb-2">核心定位</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    曾经的"汽车之都"，经历从辉煌到衰落再到重生的完整周期。城市高度依赖单一汽车产业，流水线生产模式创造了大量蓝领中产阶级。随着产业转移、油价危机和国际竞争，城市经历工业空心化、人口流失、财政破产。玩家需要在工业遗产与新兴产业之间寻求平衡，管理城市收缩与复兴的挑战。
+                </p>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: City Planning -->
+                <div class="space-y-8">
+                    <div class="glass-card p-8 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-2xl font-bold text-gray-300 mb-4 border-b border-gray-500/20 pb-2">城市规划</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-gray-300">
+                                <thead class="text-gray-200 uppercase bg-gray-700/20">
+                                    <tr>
+                                        <th class="px-4 py-3">区域</th>
+                                        <th class="px-4 py-3">定位</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700">
+                                    <tr><td class="px-4 py-2 font-bold">市中心</td><td class="px-4 py-2">复兴CBD区，摩天大楼与废弃建筑并存</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">工业区</td><td class="px-4 py-2">大型汽车工厂，多数已废弃或转型</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">铁锈地带</td><td class="px-4 py-2">废弃厂房群，高犯罪率区域</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">中产区</td><td class="px-4 py-2">曾经繁荣的住宅区，现空置率高</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">新兴科技区</td><td class="px-4 py-2">创业园区、科技公司聚集地</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">艺术区</td><td class="px-4 py-2">利用废弃建筑改造的文创空间</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-400">
+                            <span class="text-gray-300 font-bold">其他地标：</span> 福特工厂、通用总部、汽车博物馆、废弃火车站、底特律河、空置住宅区
+                        </div>
+                        <div class="mt-6">
+                            <img src="./photo/ditelv.png" alt="底特律城市规划图" class="w-full rounded-lg border border-gray-500/20">
+                        </div>
+                    </div>
+
+                    <!-- Economic Structure -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-xl font-bold text-gray-300 mb-4">经济结构演变</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="border-l-2 border-blue-500 pl-3">
+                                <h4 class="text-blue-200 font-bold">黄金时代（1910-1950）</h4>
+                                <p class="text-gray-400">人口185万，全美第四大城市，汽车工业蓬勃发展</p>
+                            </div>
+                            <div class="border-l-2 border-yellow-500 pl-3">
+                                <h4 class="text-yellow-200 font-bold">衰退期（1960-2010）</h4>
+                                <p class="text-gray-400">产业转移、种族暴动、失业率飙升、人口流失</p>
+                            </div>
+                            <div class="border-l-2 border-green-500 pl-3">
+                                <h4 class="text-green-200 font-bold">重生期（2013至今）</h4>
+                                <p class="text-gray-400">破产重组、新兴产业进驻、城市更新</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Laws -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-xl font-bold text-gray-300 mb-3">特色法案</h3>
+                        <ul class="space-y-2 text-gray-300 text-sm list-disc list-inside marker:text-gray-400">
+                            <li>单一产业依赖政策 (风险集中)</li>
+                            <li>工会保护条例 (保障工人权益)</li>
+                            <li>产业空心化应对 (紧急裁员补偿)</li>
+                            <li>城市收缩管理 (关闭公共服务)</li>
+                            <li>税收减免吸引新产业</li>
+                            <li>废弃建筑再利用计划</li>
+                            <li>创业园区扶持政策</li>
+                            <li>艺术家驻留计划</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: Details -->
+                <div class="space-y-8">
+                    <!-- Buildings -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-gray-300 mb-4">特色建筑</h3>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">巨型汽车工厂</span>
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">废弃厂房</span>
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">空置住宅</span>
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">工人宿舍</span>
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">联排别墅</span>
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">仓储物流中心</span>
+                            <span class="px-3 py-1 bg-gray-700/40 border border-gray-500/30 rounded text-xs text-gray-100">创意工作室</span>
+                        </div>
+                        <div class="relative rounded-lg overflow-hidden bg-black/40">
+                            <img src="./photo/ditelv1.png" alt="底特律特色建筑" class="w-full border border-gray-500/20 rounded-lg">
+                        </div>
+                    </div>
+
+                    <!-- Professions -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-gray-300 mb-4">特色职业 TAG</h3>
+                        <div class="space-y-4">
+                            <div class="border-l-2 border-blue-500 pl-3">
+                                <h4 class="text-blue-200 font-bold text-sm">汽车工人</h4>
+                                <p class="text-xs text-gray-400">流水线工人，工会成员，受产业周期影响大</p>
+                            </div>
+                            <div class="border-l-2 border-red-500 pl-3">
+                                <h4 class="text-red-200 font-bold text-sm">失业工人</h4>
+                                <p class="text-xs text-gray-400">失去工作的前产业工人，犯罪率相关</p>
+                            </div>
+                            <div class="border-l-2 border-purple-500 pl-3">
+                                <h4 class="text-purple-200 font-bold text-sm">科技创业者</h4>
+                                <p class="text-xs text-gray-400">复兴期新职业，利用低成本空间创业</p>
+                            </div>
+                            <div class="border-l-2 border-green-500 pl-3">
+                                <h4 class="text-green-200 font-bold text-sm">城市重建者</h4>
+                                <p class="text-xs text-gray-400">参与城市更新项目的专业人员</p>
+                            </div>
+                            <div class="border-l-2 border-yellow-500 pl-3">
+                                <h4 class="text-yellow-200 font-bold text-sm">艺术家/文创工作者</h4>
+                                <p class="text-xs text-gray-400">改造废弃空间的创意群体</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Events List -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-gray-300 mb-4">事件系统</h3>
+                        <div class="space-y-4 text-sm">
+                            <div>
+                                <h4 class="text-white font-bold mb-1">工业危机</h4>
+                                <p class="text-gray-400">石油危机、工厂倒闭、大规模裁员、工会罢工、产业外迁</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">社会问题</h4>
+                                <p class="text-gray-400">种族暴动、人口外流、房屋空置、犯罪率飙升、财政破产</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">复兴机遇</h4>
+                                <p class="text-gray-400">科技公司进驻、城市更新、文创产业、旅游业发展</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction 5: Tokyo -->
+    <section id="tokyo" class="relative py-24 border-t border-red-900/30">
+        <div class="absolute inset-0 bg-gradient-to-b from-red-950/90 to-black pointer-events-none"></div>
+        <!-- Background decoration -->
+        <div class="absolute top-0 left-0 w-1/2 h-full bg-[url('https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1920')] bg-cover bg-no-repeat opacity-10 mix-blend-overlay"></div>
+
+        <div class="relative max-w-7xl mx-auto px-4 md:px-8">
+            <div class="flex items-center gap-4 mb-12" data-aos="fade-right">
+                <div class="w-2 h-12 bg-red-500"></div>
+                <h2 class="text-5xl font-tech font-bold text-white" style="text-shadow: 0 0 10px rgba(239, 68, 68, 0.7);">方向五：醉生梦死 - 东京</h2>
+            </div>
+
+            <!-- Core Positioning - Full Width -->
+            <div class="glass-card p-8 rounded-xl mb-8" data-aos="fade-up">
+                <h3 class="text-2xl font-bold text-red-400 mb-4 border-b border-red-500/20 pb-2">核心定位</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    以歌舞伎町为代表的日本都市夜生活生态系统。表面光鲜亮丽的霓虹灯下，潜藏着极道组织、风俗产业、地下金融的灰色世界。合法黑帮"极道"维持着独特的秩序体系，牛郎店、女仆咖啡厅、居酒屋构成了多层次的夜间经济。玩家需要在法律、道义与现实之间寻求平衡，管理这座不夜城的繁荣与秩序。
+                </p>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column -->
+                <div class="space-y-8">
+                    <!-- City Planning -->
+                    <div class="glass-card p-8 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-2xl font-bold text-red-400 mb-4 border-b border-red-500/20 pb-2">城市规划</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-gray-300">
+                                <thead class="text-gray-200 uppercase bg-red-900/20">
+                                    <tr>
+                                        <th class="px-4 py-3">区域</th>
+                                        <th class="px-4 py-3">定位</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-red-700/30">
+                                    <tr><td class="px-4 py-2 font-bold">歌舞伎町</td><td class="px-4 py-2">不夜城核心，娱乐产业集中地</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">商业街</td><td class="px-4 py-2">白天正常商业区，夜晚变身酒吧街</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">极道据点</td><td class="px-4 py-2">黑帮组织办公楼、组长宅邸</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">住宅区</td><td class="px-4 py-2">高密度公寓、胶囊旅馆</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">风俗区</td><td class="px-4 py-2">牛郎店、女仆咖啡厅聚集地</td></tr>
+                                    <tr><td class="px-4 py-2 font-bold">地下街</td><td class="px-4 py-2">赌场、地下拳击场、走私市场</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-400">
+                            <span class="text-red-300 font-bold">其他地标：</span> 新宿车站、黄金街、花道通、唐吉诃德、一兰拉面、卡拉OK大楼、情人旅馆街
+                        </div>
+                        <div class="mt-6">
+                            <img src="./photo/dongjing1.jpg" alt="东京城市规划图" class="w-full rounded-lg border border-red-500/20">
+                        </div>
+                    </div>
+
+                    <!-- Economic Structure -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-right">
+                        <h3 class="text-xl font-bold text-red-400 mb-4">经济结构</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="border-l-2 border-red-500 pl-3">
+                                <h4 class="text-red-300 font-bold">合法娱乐业（60%）</h4>
+                                <p class="text-gray-400">居酒屋、餐饮、卡拉OK、电影院、游戏厅</p>
+                            </div>
+                            <div class="border-l-2 border-orange-500 pl-3">
+                                <h4 class="text-orange-300 font-bold">灰色产业（30%）</h4>
+                                <p class="text-gray-400">牛郎店、风俗店、高利贷、柏青哥、地下赌场</p>
+                            </div>
+                            <div class="border-l-2 border-purple-500 pl-3">
+                                <h4 class="text-purple-300 font-bold">极道保护费（10%）</h4>
+                                <p class="text-gray-400">各店铺向当地组织缴纳的"保护费"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-8">
+                    <!-- Buildings -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-red-400 mb-4">特色建筑</h3>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">极道本部大楼</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">牛郎店</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">女仆咖啡厅</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">居酒屋</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">卡拉OK大楼</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">柏青哥店</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">情人旅馆</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">地下赌场</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">拉面店</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">便利店</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">游戏中心</span>
+                            <span class="px-3 py-1 bg-red-900/30 border border-red-500/30 rounded text-xs text-red-100">胶囊旅馆</span>
+                        </div>
+                        <div>
+                            <img src="./photo/dongjing.jpg" alt="东京特色建筑" class="w-full border border-red-500/20 rounded-lg">
+                        </div>
+                    </div>
+
+                    <!-- Professions -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-red-400 mb-4">特色职业TAG</h3>
+                        <div class="space-y-3">
+                            <div class="border-l-2 border-red-500 pl-3">
+                                <h4 class="text-red-300 font-bold text-sm">极道成员</h4>
+                                <p class="text-xs text-gray-400">从若众到组长的阶层体系</p>
+                            </div>
+                            <div class="border-l-2 border-pink-500 pl-3">
+                                <h4 class="text-pink-300 font-bold text-sm">牛郎/女公关</h4>
+                                <p class="text-xs text-gray-400">夜间娱乐业的销售冠军</p>
+                            </div>
+                            <div class="border-l-2 border-purple-500 pl-3">
+                                <h4 class="text-purple-300 font-bold text-sm">居酒屋店主</h4>
+                                <p class="text-xs text-gray-400">倾听客人心声的疗愈者</p>
+                            </div>
+                            <div class="border-l-2 border-orange-500 pl-3">
+                                <h4 class="text-orange-300 font-bold text-sm">高利贷催债者</h4>
+                                <p class="text-xs text-gray-400">游走在灰色地带的回收专员</p>
+                            </div>
+                            <div class="border-l-2 border-blue-500 pl-3">
+                                <h4 class="text-blue-300 font-bold text-sm">普通上班族</h4>
+                                <p class="text-xs text-gray-400">白天西装革履，夜晚买醉常客</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Events -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-red-400 mb-4">事件系统</h3>
+                        <div class="space-y-4 text-sm">
+                            <div>
+                                <h4 class="text-white font-bold mb-1">极道冲突</h4>
+                                <p class="text-gray-400">组织火拼、地盘争夺、继承人之争、义理与利益的对立</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">社会问题</h4>
+                                <p class="text-gray-400">负债者跳楼、女性失踪案、外国黑帮渗透、毒品走私</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">人情故事</h4>
+                                <p class="text-gray-400">落魄者的重生、牛郎的情感纠葛、极道的仁义之道、深夜食堂的温情</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">经济波动</h4>
+                                <p class="text-gray-400">泡沫经济、消费降级、客源减少、新娱乐形式冲击</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Laws -->
+                    <div class="glass-card p-6 rounded-xl" data-aos="fade-left">
+                        <h3 class="text-xl font-bold text-red-400 mb-3">特色法案</h3>
+                        <ul class="space-y-2 text-gray-300 text-sm list-disc list-inside marker:text-red-400">
+                            <li>极道组织合法化 (指定暴力团制度)</li>
+                            <li>娱乐场所营业时间管制</li>
+                            <li>风俗业许可证制度</li>
+                            <li>地盘划分协议 (避免火拼)</li>
+                            <li>保护费税收化 (灰色收入合法化)</li>
+                            <li>外国人禁入条款</li>
+                            <li>未成年人保护法令</li>
+                            <li>义理人情调解机制</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            once: true,
+            offset: 100,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+    </script>
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-gray-800 bg-black">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-gray-500 text-sm">© 2026 GI City Project. All Rights Reserved.</p>
+            <p class="text-gray-600 text-xs mt-2">城市建造类模拟经营游戏设计方案</p>
+        </div>
+    </footer>
+
